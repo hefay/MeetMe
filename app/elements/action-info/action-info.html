@@ -1,0 +1,176 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="action-info">
+  <template>
+    <style include="shared-styles"></style>
+    <style>
+      :host {
+        display: block;
+      }
+      paper-material {
+        border-radius: 2px;
+        height: 100%;
+        padding: 16px 0 16px 0;
+        width: calc(98.66% - 16px);
+        margin: 16px auto;
+        background: white;
+      }
+      @media (max-width: 600px) {
+
+        paper-material {
+          --menu-container-display: none;
+          width: calc(97.33% - 32px);
+          padding-left: 16px;
+          padding-right: 16px;
+        }
+
+        paper-toolbar.tall .app-name {
+          font-size: 24px;
+          font-weight: 400;
+        }
+
+        #drawer .paper-toolbar {
+          margin-left: 16px;
+        }
+
+      }
+
+      /* Tablet+ */
+      @media (min-width: 601px) {
+
+        paper-material {
+          width: calc(98% - 46px);
+          margin-bottom: 32px;
+          padding-left: 30px;
+          padding-right: 30px;
+        }
+
+        #drawer.paper-drawer-panel > [drawer] {
+          border-right: 1px solid rgba(0, 0, 0, 0.14);
+        }
+
+        iron-pages {
+          padding: 48px 62px;
+        }
+
+      }
+    </style>
+    <section>
+      
+    <iron-ajax
+      id="baseInfo"
+      url="{{baseUrl}}api/actions/{{action}}"
+      handle-as="json"
+      on-response="handleResponse"
+      debounce-duration="300"></iron-ajax>
+    <paper-material elevation="1">
+      <h2 class="page-title">{{name}}</h2>
+      <div class="infobox">
+        <span class="info-title">Místo:</span>
+        <span class="info-text">{{location}}</span>
+      </div>
+      <div class="infobox">
+        <span class="info-title">Datum:</span>
+        <span class="info-text">{{date}}</span>
+      </div>
+      <div class="infobox">
+        <span class="info-title">Počasí:</span>
+        <span class="info-text">{{actualTemp}} °C ({{actualTempLocation}})</span>
+      </div>
+      <p>{{text}}</p>
+    </paper-material>
+    <paper-material elevation="1">
+      <h3>Fotky</h3>
+      <div class="photos">
+        <div class="photos-line">
+          <template is="dom-repeat" items="{{photos}}">
+            <div class="photo" on-click="displayPhoto"><img src="{{item}}"></div>
+          </template>
+        </div>
+      </div>
+    </paper-material>
+     <paper-material elevation="1">
+      <h3>Mapa</h3>
+      <div id="map" class="maps">
+        
+      </div>
+    </paper-material>
+      </section>
+  </template>
+  
+  <script>
+    (function() {
+      'use strict';
+  
+      Polymer({
+        is: 'action-info',
+        properties: {
+          action: {
+            type: String,
+            observer: '_actionChanged'
+          }
+        },
+        ready: function() {
+          
+         
+        },
+        _actionChanged: function(ev) {
+          this.baseUrl = this.getBaseUrl();
+          // Reset udaju
+          this.name = "Načítám název akce";
+          this.location = "Načítám místo akce";
+          this.description = "Načítám popis akce";
+          this.actualTempLocation = "Získávám údaje o počasí";
+          this.actualTemp = "Získávám údaje o poloze";
+          
+          this.$.baseInfo.generateRequest();
+
+        },
+        getBaseUrl() {
+          return document.querySelector("#app").baseUrl;
+        },
+        handleResponse: function(ev, data) {
+          var dat = data.response;
+          this.name = dat.name;
+          this.location = dat.location;
+          this.urlLocation = encodeURIComponent(this.location);
+          this.text = dat.description;
+          var d = new Date(dat.date);
+          this.date = d.getDay() + ". " + d.getMonth() + ". " + d.getFullYear();
+          this.photos = dat.photos;
+          this.insertMap();
+          this.getWeather(this.date);
+        },
+        getWeather(date) {
+          var t = this;
+          var ajax = document.createElement("iron-ajax");
+          ajax.url = "http://api.openweathermap.org/data/2.5/weather?q=" + this.urlLocation + ",uk&appid=93db7d42b3769c00a8436da909f9d0d3&units=metric";
+          ajax.handleAs = "json";
+          ajax.generateRequest();
+          ajax.addEventListener('response', function(ev) {
+            var r = ev.detail.response;
+            t.actualTempLocation = r.name;
+            t.actualTemp = r.main.temp;
+          });
+        },
+        displayPhoto: function(ev) {
+          console.log("Not implemented yet!");
+        },
+        insertMap() {
+          var googleIframe = document.createElement('iframe');
+          googleIframe.width = "100%";
+          googleIframe.height = "500";
+          googleIframe.frameborder = "0";
+          googleIframe.setAttribute('style', "border:0");
+          googleIframe.src = "https://www.google.com/maps/embed/v1/place?q=" + this.urlLocation + "&key=AIzaSyAecJdMewtdNHJTCNDdfjQgEjAhxG1aUHk"
+          googleIframe.setAttribute('allowfullscreen', '');
+          var mapElement = this.querySelector('#map');
+          while (mapElement.firstChild) {
+            mapElement.removeChild(mapElement.firstChild);
+          }
+          mapElement.appendChild(googleIframe);
+        }
+      });
+    })();
+  </script>
+</dom-module>

@@ -1,0 +1,6 @@
+RewriteEngine on
+RewriteRule   api/(.*)   /via/api-mock.php?params=$1
+
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+</IfModule>

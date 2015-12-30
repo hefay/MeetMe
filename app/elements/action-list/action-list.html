@@ -1,0 +1,75 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="action-list">
+  <style>
+    .action-card {
+      --paper-card-header-image-text: {
+        color: #FFF;
+        text-shadow: -1px 0 #000, 0 1px #000, 1px 0 #000, 0 -1px #000;
+      }
+      margin: 5px;
+    }
+    
+    @media (min-width: 1700px) {
+      .action-card {
+        width: calc(25% - 10px);
+      }
+    }
+    @media (min-width: 1360px) and (max-width: 1700px) {
+      .action-card {
+        width: calc(33% - 10px);
+      }
+    }
+    @media (min-width: 100px) and (max-width: 1360px) {
+      .action-card {
+        width: calc(50% - 10px);
+      }
+    }
+    
+    @media (max-width: 970px) {
+      .action-card {
+        width: 100%;
+      }
+    }
+  </style>
+  <template>
+    <iron-ajax
+      auto
+      id="baseInfo"
+      url="{{baseUrl}}api/actions"
+      handle-as="json"
+      last-response="{{items}}"
+      debounce-duration="300"></iron-ajax>
+    <div class="layout horizontal wrap">
+      <template is="dom-repeat" items="{{items}}">
+        <paper-card on-click="openActionCall" data-url="{{item.urlName}}" image="{{item.cover}}" class="action-card" heading="{{item.name}}">
+          <div class="card-content">{{item.description}}</div>
+        </paper-card>
+      </template>
+    </div>
+  </template>
+
+  <script>
+    (function() {
+      'use strict';
+  
+      Polymer({
+        is: 'action-list',
+        items: {
+          type: Array,
+          notify: true,
+        },
+        parseResponse: function(data) {
+          this.items = data;
+        },
+        properties: {
+          openAction: Object,
+          baseUrl: String
+        },
+        openActionCall: function(ev) {
+          this.fire(this.openAction, {card: ev.model.item});
+        }
+      });
+    })();
+  </script>
+</dom-module>
